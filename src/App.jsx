@@ -60,7 +60,9 @@ export default function App() {
   const { status, session } = useSession()
   // undefined = loading, null = no profile yet, object = ready
   const [profile, setProfile] = useState(undefined)
-  const [activeTab, setActiveTab] = useState('home')
+  // During wind-down hours the app opens on Stories — bedtime is what she's
+  // here for at 8pm. Initial tab only; navigation stays entirely hers.
+  const [activeTab, setActiveTab] = useState(() => (isBedtimeHour() ? 'stories' : 'home'))
 
   // Dusk backdrop during wind-down hours. Re-checked on resume and on a slow
   // interval — a phone app crosses 7pm while backgrounded, not while watched.
@@ -145,7 +147,7 @@ export default function App() {
   return (
     <div style={{ maxWidth: '480px', margin: '0 auto', position: 'relative', minHeight: '100vh' }}>
       <div key={activeTab} style={{ paddingBottom: '72px', animation: 'fadeIn 0.22s ease' }}>
-        {activeTab === 'home'    && <HomeScreen profile={profile} onResetProfile={() => setProfile(null)} onSignOut={isSupabaseConfigured ? handleSignOut : null} onOpenJournal={() => setActiveTab('journal')} onOpenStories={() => setActiveTab('stories')} />}
+        {activeTab === 'home'    && <HomeScreen profile={profile} onResetProfile={() => setProfile(null)} onSignOut={isSupabaseConfigured ? handleSignOut : null} onOpenJournal={() => setActiveTab('journal')} />}
         {activeTab === 'stories' && <StoriesScreen profile={profile} />}
         {activeTab === 'stats'      && <StatsScreen profile={profile} onProfileChange={handleProfileChange} />}
         {activeTab === 'milestones' && <MilestonesScreen profile={profile} />}
