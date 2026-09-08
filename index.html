@@ -21,6 +21,11 @@
         background: linear-gradient(145deg, #dce8f8 0%, #e8e0f8 45%, #d4ede6 100%);
         min-height: 100vh;
       }
+      /* Wind-down hours: the backdrop dims to dusk (cards stay white, so
+         everything remains readable — the mood shifts, not the contrast). */
+      body.evening {
+        background: linear-gradient(145deg, #aeb6e2 0%, #a396d4 45%, #8fa9c6 100%);
+      }
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(6px); }
         to   { opacity: 1; transform: translateY(0); }

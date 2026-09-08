@@ -12,6 +12,8 @@ import Burst from '../components/Burst'
 import StreakRow from '../components/StreakRow'
 import PhotoHunt from '../components/PhotoHunt'
 import Flashback from '../components/Flashback'
+import TonightStory from '../components/TonightStory'
+import { isBedtimeHour, greetingForHour } from '../lib/timeOfDay'
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001'
 
@@ -79,7 +81,7 @@ const STAT_COLORS = [
   { accent: '#E91E8C' },
 ]
 
-export default function HomeScreen({ profile, onResetProfile, onSignOut, onOpenJournal }) {
+export default function HomeScreen({ profile, onResetProfile, onSignOut, onOpenJournal, onOpenStories }) {
   const [selectedTopic, setSelectedTopic] = useState(null)
   const [savedTips, setSavedTips] = useState(() => loadSaved())
   const [showSaved, setShowSaved] = useState(false)
@@ -109,15 +111,19 @@ export default function HomeScreen({ profile, onResetProfile, onSignOut, onOpenJ
   // resumed from background the next morning would otherwise keep yesterday's
   // tip frozen because nothing triggers a re-render.
   const [today, setToday] = useState(() => todayKey())
+  const [hour, setHour] = useState(() => new Date().getHours())
   useEffect(() => {
     function checkDay() {
       const t = todayKey()
       setToday(prev => (prev === t ? prev : t))
+      setHour(new Date().getHours())
       setStreakInfo(streakSummary()) // day rollover: today's cell + streak refresh
     }
+    const timer = setInterval(checkDay, 10 * 60 * 1000) // catch 7pm while the app sits open
     document.addEventListener('visibilitychange', checkDay)
     window.addEventListener('focus', checkDay)
     return () => {
+      clearInterval(timer)
       document.removeEventListener('visibilitychange', checkDay)
       window.removeEventListener('focus', checkDay)
     }
@@ -329,13 +335,16 @@ export default function HomeScreen({ profile, onResetProfile, onSignOut, onOpenJ
         boxShadow: '0 4px 24px rgba(100,100,180,0.08)',
       }}>
         <p style={{ margin: '0 0 4px', fontSize: '14px', color: '#9ca3af', fontWeight: '500' }}>
-          Hi {momName}!
+          {greetingForHour(hour, momName)}
         </p>
         <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#1e1b4b', lineHeight: 1.2 }}>
           {babyName} is {formatBabyAge(dateOfBirth)}
         </h1>
         <StreakRow summary={streakInfo} babyName={babyName} />
       </div>
+
+      {/* Wind-down hours: the evening leads with tonight's story */}
+      {isBedtimeHour(hour) && <TonightStory profile={profile} onOpenStories={onOpenStories} />}
 
       {/* A memory resurfaced from ~N months ago, when one exists */}
       <Flashback profile={profile} onOpenJournal={onOpenJournal} />
