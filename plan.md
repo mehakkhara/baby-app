@@ -283,6 +283,9 @@ Without caching, every time the mom switches tabs and comes back to Home, we'd h
 4. **Monthly photo hunt** — 3×3 grid of age-aware photo prompts (`data/photoPrompts.js`), one card on Home. Capturing a prompt saves the photo to the journal (prompt text as the note) and fills the cell with the thumbnail. Month state in localStorage (`photoHunt:<YYYY-MM>`); prompts rotate with the baby's age band.
    - *Scope change (same day):* the Home **memory book card + "more memories" strip were removed** — redundant with the hunt as a second photo surface on Home. The hunt is now Home's one photo surface (with a Journal → link); free-form photo/video/note adds live in the Journal tab's own form.
 
+### Shipped next (same week)
+5. **Flashback card** (branch `feat/flashback`) — Home resurfaces a journal photo/video from a whole number of months ago (same day-of-month, ±3 days; most recent anniversary wins). Tap opens the Journal. Appears only when a real match exists — its appearance is the surprise.
+
 ### Later (from the idea docs, not in this pass)
 - Flashback "one month ago today", time-aware home (evening → Tonight's story), Sunday recap + Web Share, timelapse reel, milestone keepsake cards, collage poster.
 - Design-debt fixes flagged in the audit: unify #7C3AED vs #7C6FF7, move settings off Home, replace confirm()/alert() with sheets, single AddMemory component, unit toggle for Growth.

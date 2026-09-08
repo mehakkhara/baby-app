@@ -11,6 +11,7 @@ import { markCheckIn, streakSummary } from '../lib/streak'
 import Burst from '../components/Burst'
 import StreakRow from '../components/StreakRow'
 import PhotoHunt from '../components/PhotoHunt'
+import Flashback from '../components/Flashback'
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001'
 
@@ -335,6 +336,9 @@ export default function HomeScreen({ profile, onResetProfile, onSignOut, onOpenJ
         </h1>
         <StreakRow summary={streakInfo} babyName={babyName} />
       </div>
+
+      {/* A memory resurfaced from ~N months ago, when one exists */}
+      <Flashback profile={profile} onOpenJournal={onOpenJournal} />
 
       {/* How's baby? responder sheet */}
       {activeState && (() => {
