@@ -126,7 +126,7 @@ export default function App() {
 
   return (
     <div style={{ maxWidth: '480px', margin: '0 auto', position: 'relative', minHeight: '100vh' }}>
-      <div style={{ paddingBottom: '72px' }}>
+      <div key={activeTab} style={{ paddingBottom: '72px', animation: 'fadeIn 0.22s ease' }}>
         {activeTab === 'home'    && <HomeScreen profile={profile} onResetProfile={() => setProfile(null)} onSignOut={isSupabaseConfigured ? handleSignOut : null} onOpenJournal={() => setActiveTab('journal')} />}
         {activeTab === 'stories' && <StoriesScreen profile={profile} />}
         {activeTab === 'stats'      && <StatsScreen profile={profile} onProfileChange={handleProfileChange} />}
