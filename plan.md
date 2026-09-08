@@ -266,3 +266,23 @@ Without caching, every time the mom switches tabs and comes back to Home, we'd h
 2. **Level 1 (AI)** — highest value addition, relatively self-contained
 3. **Level 2 (Accounts)** — needed before sharing with anyone else or using across devices
 4. **Level 3** — only after validating that the core app is useful
+
+---
+
+## Interactivity + Photo Play — 2026-09-07
+
+**Goal:** the app reads as static — nothing responds to touch, and nothing changes between visits. Add a liveness layer + a daily/monthly comeback loop, all client-side ($0/month). Full option exploration with tappable prototypes: `public/live-app-ideas.html` and `public/photo-ideas.html`.
+
+**Branch:** `feat/live-interactions` (stacked on `feat/goodnight-stories`).
+
+### Scope (chosen 2026-09-07 — top picks from both idea docs)
+
+1. **Micro-interaction pass** — press-scale on all buttons (one global CSS rule), confetti burst on milestone "Yes!", heart burst on "Save tip", 3D flip on "show me a different tip", fade transition on tab switch. No logic changes.
+2. **Check-in streak** — `lib/streak.js`, localStorage (`checkIns`, one row per local day). "Got it" and the feelings responder's "This helped" both stamp today. 7-day tracker row under the Home greeting. Encouragement-only framing (streak counts runs ending today *or yesterday* so it never shows as broken mid-day) — logic adapted from the removed `engagement.js` (d491e5c).
+3. **Then ↔ Now slider** — top of Journal when oldest & newest photos are ≥7 days apart. Draggable clip-path comparison, labeled with baby's age at each photo. Reads existing IndexedDB entries; no new storage.
+4. **Monthly photo hunt** — 3×3 grid of age-aware photo prompts (`data/photoPrompts.js`), one card on Home. Capturing a prompt saves the photo to the journal (prompt text as the note) and fills the cell with the thumbnail. Month state in localStorage (`photoHunt:<YYYY-MM>`); prompts rotate with the baby's age band.
+   - *Scope change (same day):* the Home **memory book card + "more memories" strip were removed** — redundant with the hunt as a second photo surface on Home. The hunt is now Home's one photo surface (with a Journal → link); free-form photo/video/note adds live in the Journal tab's own form.
+
+### Later (from the idea docs, not in this pass)
+- Flashback "one month ago today", time-aware home (evening → Tonight's story), Sunday recap + Web Share, timelapse reel, milestone keepsake cards, collage poster.
+- Design-debt fixes flagged in the audit: unify #7C3AED vs #7C6FF7, move settings off Home, replace confirm()/alert() with sheets, single AddMemory component, unit toggle for Growth.

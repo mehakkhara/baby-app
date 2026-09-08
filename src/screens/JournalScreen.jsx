@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getEntries, addEntry, deleteEntry, isVideoType } from '../data/journalStore'
 import { groupByMonth, pickHero, nameAndAgeAt } from '../lib/babyAge'
+import ThenNow, { pickThenNow } from '../components/ThenNow'
 
 function shortDate(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
@@ -344,6 +345,8 @@ export default function JournalScreen({ profile }) {
     [entries, profile?.dateOfBirth],
   )
 
+  const thenNowPair = useMemo(() => pickThenNow(entries), [entries])
+
   async function refresh() {
     setEntries(await getEntries())
     setLoading(false)
@@ -416,15 +419,18 @@ export default function JournalScreen({ profile }) {
             </button>
           </div>
         ) : (
-          months.map(group => (
-            <MonthSection
-              key={group.key}
-              group={group}
-              urls={urls}
-              profile={profile}
-              onOpen={setOpened}
-            />
-          ))
+          <>
+            {thenNowPair && <ThenNow pair={thenNowPair} urls={urls} profile={profile} />}
+            {months.map(group => (
+              <MonthSection
+                key={group.key}
+                group={group}
+                urls={urls}
+                profile={profile}
+                onOpen={setOpened}
+              />
+            ))}
+          </>
         )}
       </div>
 

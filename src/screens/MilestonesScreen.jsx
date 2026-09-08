@@ -5,6 +5,7 @@ import { loadStatuses, setStatus } from '../lib/milestoneProgress'
 import { loadCustom, addCustom, removeCustom, customForCheckpoint } from '../lib/customMilestones'
 import { ideasFor } from '../data/milestoneIdeas'
 import { loadPhotoLinks, attachPhoto, detachPhoto, loadPhotoUrls } from '../lib/milestonePhotos'
+import Burst from '../components/Burst'
 
 export default function MilestonesScreen({ profile }) {
   const { babyName, dateOfBirth } = profile
@@ -39,8 +40,16 @@ export default function MilestonesScreen({ profile }) {
     }
   }, [photoLinks])
 
+  const [celebrating, setCelebrating] = useState(null)
+
   function mark(id, status) {
+    const wasDone = statuses[id] === 'done'
     setStatuses({ ...setStatus(id, status) })
+    // A freshly-marked milestone gets a moment of confetti — it *is* a moment.
+    if (status === 'done' && !wasDone) {
+      setCelebrating(id)
+      setTimeout(() => setCelebrating(null), 1400)
+    }
   }
 
   function saveOwn(text) {
@@ -264,8 +273,10 @@ export default function MilestonesScreen({ profile }) {
                 padding: '12px',
                 marginBottom: '8px',
                 transition: 'all 0.15s',
+                position: 'relative',
               }}
             >
+              {celebrating === m.id && <Burst kind="confetti" />}
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
                 <span style={{ display: 'inline-block', fontSize: '9px', fontWeight: '700', color: dom.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>
                   {dom.label}
