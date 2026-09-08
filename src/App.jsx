@@ -9,6 +9,7 @@ import AuthScreen from './screens/AuthScreen'
 import { isSupabaseConfigured } from './lib/supabase'
 import { useSession, signOut } from './lib/useSession'
 import { getProfile, saveProfile, backfillLocalProfileIfNeeded } from './lib/db'
+import { isBedtimeHour } from './lib/timeOfDay'
 
 const HomeIcon = ({ active }) => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#7C6FF7' : '#aab'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -60,6 +61,23 @@ export default function App() {
   // undefined = loading, null = no profile yet, object = ready
   const [profile, setProfile] = useState(undefined)
   const [activeTab, setActiveTab] = useState('home')
+
+  // Dusk backdrop during wind-down hours. Re-checked on resume and on a slow
+  // interval — a phone app crosses 7pm while backgrounded, not while watched.
+  useEffect(() => {
+    function applyTheme() {
+      document.body.classList.toggle('evening', isBedtimeHour())
+    }
+    applyTheme()
+    const timer = setInterval(applyTheme, 10 * 60 * 1000)
+    document.addEventListener('visibilitychange', applyTheme)
+    window.addEventListener('focus', applyTheme)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', applyTheme)
+      window.removeEventListener('focus', applyTheme)
+    }
+  }, [])
 
   useEffect(() => {
     if (status !== 'ready') return
@@ -127,7 +145,7 @@ export default function App() {
   return (
     <div style={{ maxWidth: '480px', margin: '0 auto', position: 'relative', minHeight: '100vh' }}>
       <div key={activeTab} style={{ paddingBottom: '72px', animation: 'fadeIn 0.22s ease' }}>
-        {activeTab === 'home'    && <HomeScreen profile={profile} onResetProfile={() => setProfile(null)} onSignOut={isSupabaseConfigured ? handleSignOut : null} onOpenJournal={() => setActiveTab('journal')} />}
+        {activeTab === 'home'    && <HomeScreen profile={profile} onResetProfile={() => setProfile(null)} onSignOut={isSupabaseConfigured ? handleSignOut : null} onOpenJournal={() => setActiveTab('journal')} onOpenStories={() => setActiveTab('stories')} />}
         {activeTab === 'stories' && <StoriesScreen profile={profile} />}
         {activeTab === 'stats'      && <StatsScreen profile={profile} onProfileChange={handleProfileChange} />}
         {activeTab === 'milestones' && <MilestonesScreen profile={profile} />}
