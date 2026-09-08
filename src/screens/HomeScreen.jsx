@@ -780,55 +780,6 @@ export default function HomeScreen({ profile, onResetProfile, onSignOut, onOpenJ
         Based on American Academy of Pediatrics guidance
       </p>
 
-      {/* Topic chips — primary inline + Other expands the rest */}
-      <div style={{ marginBottom: '14px' }}>
-        <p style={{ margin: '0 0 10px', fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: '2px' }}>
-          Explore by Topic
-        </p>
-        <div style={{
-          display: 'flex',
-          gap: '8px',
-          overflowX: 'auto',
-          paddingBottom: '4px',
-          WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-        }}>
-          {[...PRIMARY_TOPICS, { value: 'other', label: 'Other', emoji: '＋' }].map(topic => {
-            const isSelected = selectedTopic === topic.value
-            return (
-              <button
-                key={String(topic.value)}
-                onClick={() => setSelectedTopic(topic.value)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  padding: '8px 14px',
-                  borderRadius: '20px',
-                  border: 'none',
-                  background: isSelected
-                    ? 'linear-gradient(135deg, #7C6FF7, #a78bfa)'
-                    : '#fff',
-                  color: isSelected ? '#fff' : '#6b7280',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                  boxShadow: isSelected
-                    ? '0 4px 12px rgba(124,111,247,0.35)'
-                    : '0 2px 8px rgba(100,100,180,0.08)',
-                  transition: 'all 0.15s',
-                }}
-              >
-                <span>{topic.emoji}</span>
-                <span>{topic.label}</span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
       {/* Tips section */}
       <div key={`${selectedTopic}-${browseMonth}`} style={{ animation: 'fadeIn 0.2s ease' }}>
         {(tipOfDay || (showAiTip && (aiTip || aiTipLoading))) ? (
@@ -959,6 +910,55 @@ export default function HomeScreen({ profile, onResetProfile, onSignOut, onOpenJ
 
           </>
         ) : null}
+      </div>
+
+      {/* Topic chips — primary inline + Other expands the rest */}
+      <div style={{ marginBottom: '14px' }}>
+        <p style={{ margin: '0 0 10px', fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: '2px' }}>
+          Explore by Topic
+        </p>
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          overflowX: 'auto',
+          paddingBottom: '4px',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}>
+          {[...PRIMARY_TOPICS, { value: 'other', label: 'Other', emoji: '＋' }].map(topic => {
+            const isSelected = selectedTopic === topic.value
+            return (
+              <button
+                key={String(topic.value)}
+                onClick={() => setSelectedTopic(topic.value)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '8px 14px',
+                  borderRadius: '20px',
+                  border: 'none',
+                  background: isSelected
+                    ? 'linear-gradient(135deg, #7C6FF7, #a78bfa)'
+                    : '#fff',
+                  color: isSelected ? '#fff' : '#6b7280',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  boxShadow: isSelected
+                    ? '0 4px 12px rgba(124,111,247,0.35)'
+                    : '0 2px 8px rgba(100,100,180,0.08)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <span>{topic.emoji}</span>
+                <span>{topic.label}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* How's baby feeling today? — chips styled like Explore by Topic */}

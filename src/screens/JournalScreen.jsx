@@ -1,77 +1,214 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getEntries, addEntry, deleteEntry, isVideoType } from '../data/journalStore'
+import { groupByMonth, pickHero, nameAndAgeAt } from '../lib/babyAge'
 
-function formatDate(ts) {
-  const d = new Date(ts)
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+function shortDate(ts) {
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
-function EntryCard({ entry, onDelete }) {
-  const [photoUrl, setPhotoUrl] = useState(null)
-  const isVideo = isVideoType(entry.photoType)
+// One object URL per entry, revoked together when the set changes. Creating
+// these per-card would leak on every re-render.
+function useObjectUrls(entries) {
+  return useMemo(() => {
+    const map = new Map()
+    for (const e of entries) {
+      if (e.photoBlob) map.set(e.id, URL.createObjectURL(e.photoBlob))
+    }
+    return map
+  }, [entries])
+}
 
-  useEffect(() => {
-    if (!entry.photoBlob) return
-    const url = URL.createObjectURL(entry.photoBlob)
-    setPhotoUrl(url)
-    return () => URL.revokeObjectURL(url)
-  }, [entry.photoBlob])
+function Media({ url, type, style }) {
+  if (!url) return null
+  return isVideoType(type)
+    ? <video src={url} muted playsInline preload="metadata" style={{ objectFit: 'cover', display: 'block', background: '#000', ...style }} />
+    : <img src={url} alt="" style={{ objectFit: 'cover', display: 'block', ...style }} />
+}
+
+function PlayBadge({ size = 30 }) {
+  return (
+    <span style={{
+      position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+      width: `${size}px`, height: `${size}px`, borderRadius: '50%',
+      background: 'rgba(0,0,0,0.45)', color: '#fff', fontSize: `${size * 0.42}px`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      paddingLeft: '2px', pointerEvents: 'none',
+    }}>▶</span>
+  )
+}
+
+/* ---------------- month section: one hero, then pairs ---------------- */
+
+function MonthSection({ group, urls, profile, onOpen }) {
+  const hero = pickHero(group.entries)
+  const rest = group.entries.filter(e => e !== hero)
 
   return (
-    <div style={{
-      backgroundColor: '#fff',
-      borderRadius: '14px',
-      overflow: 'hidden',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
-      marginBottom: '14px',
-    }}>
-      {photoUrl && (
-        isVideo ? (
-          <video src={photoUrl} controls playsInline style={{
-            width: '100%',
-            display: 'block',
-            maxHeight: '420px',
-            objectFit: 'cover',
-            background: '#000',
-          }} />
-        ) : (
-          <img src={photoUrl} alt="" style={{
-            width: '100%',
-            display: 'block',
-            maxHeight: '420px',
-            objectFit: 'cover',
-          }} />
-        )
-      )}
-      <div style={{ padding: '14px 16px' }}>
-        <p style={{ margin: 0, fontSize: '12px', color: '#888', fontWeight: 500 }}>
-          {formatDate(entry.createdAt)}
-        </p>
-        {entry.note && (
-          <p style={{ margin: '6px 0 0', fontSize: '15px', color: '#1a1a2e', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-            {entry.note}
-          </p>
+    <section style={{ marginBottom: '26px' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '9px', margin: '0 2px 10px' }}>
+        {group.ageLabel && (
+          <span style={{
+            fontSize: '11px', fontWeight: 700, letterSpacing: '0.07em',
+            textTransform: 'uppercase', color: '#7C3AED',
+          }}>
+            {group.ageLabel}
+          </span>
         )}
+        <span style={{ flex: 1, height: '1px', backgroundColor: 'rgba(0,0,0,0.09)' }} />
+        <span style={{ fontSize: '11px', color: '#aaa' }}>{group.monthLabel}</span>
+      </div>
+
+      {hero && (
         <button
-          onClick={() => {
-            if (confirm('Delete this memory?')) onDelete(entry.id)
-          }}
+          onClick={() => onOpen(hero)}
           style={{
-            marginTop: '10px',
-            background: 'transparent',
-            border: 'none',
-            padding: 0,
-            color: '#c44',
-            fontSize: '13px',
-            cursor: 'pointer',
+            position: 'relative', display: 'block', width: '100%', padding: 0, border: 'none',
+            borderRadius: '14px', overflow: 'hidden', cursor: 'pointer', marginBottom: '9px',
+            backgroundColor: '#fff', boxShadow: '0 2px 9px rgba(0,0,0,0.1)', textAlign: 'left',
           }}
         >
-          Delete
+          <Media url={urls.get(hero.id)} type={hero.photoType} style={{ width: '100%', maxHeight: '260px', height: '200px' }} />
+          {isVideoType(hero.photoType) && urls.get(hero.id) && <PlayBadge size={38} />}
+          {urls.get(hero.id) ? (
+            <div style={{
+              position: 'absolute', left: 0, right: 0, bottom: 0,
+              padding: '26px 13px 11px',
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.68))',
+              color: '#fff',
+            }}>
+              {hero.note && (
+                <div style={{ fontSize: '13.5px', fontWeight: 600, lineHeight: 1.35 }}>{hero.note}</div>
+              )}
+              <div style={{ fontSize: '10.5px', opacity: 0.85, marginTop: '2px' }}>
+                {shortDate(hero.createdAt)}
+                {profile?.dateOfBirth && ` · ${nameAndAgeAt(profile.babyName, profile.dateOfBirth, hero.createdAt)}`}
+              </div>
+            </div>
+          ) : (
+            // A note with no photo still deserves a place in the book.
+            <div style={{ padding: '15px 14px' }}>
+              <div style={{ fontSize: '14px', color: '#1a1a2e', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{hero.note}</div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>
+                {shortDate(hero.createdAt)}
+                {profile?.dateOfBirth && ` · ${nameAndAgeAt(profile.babyName, profile.dateOfBirth, hero.createdAt)}`}
+              </div>
+            </div>
+          )}
         </button>
+      )}
+
+      {rest.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          {rest.map(entry => (
+            <button
+              key={entry.id}
+              onClick={() => onOpen(entry)}
+              style={{
+                position: 'relative', padding: 0, border: 'none', borderRadius: '12px',
+                overflow: 'hidden', cursor: 'pointer', backgroundColor: '#fff',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.07)', textAlign: 'left',
+              }}
+            >
+              {urls.get(entry.id) && (
+                <div style={{ position: 'relative' }}>
+                  <Media url={urls.get(entry.id)} type={entry.photoType} style={{ width: '100%', height: '104px' }} />
+                  {isVideoType(entry.photoType) && <PlayBadge size={26} />}
+                </div>
+              )}
+              <div style={{ padding: '8px 9px 9px' }}>
+                {entry.note && (
+                  <div style={{
+                    fontSize: '11.5px', color: '#1a1a2e', lineHeight: 1.35,
+                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                  }}>
+                    {entry.note}
+                  </div>
+                )}
+                <div style={{ fontSize: '10px', color: '#aaa', marginTop: entry.note ? '4px' : 0 }}>
+                  {shortDate(entry.createdAt)}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+/* ---------------- opened memory ---------------- */
+
+function EntrySheet({ entry, url, profile, onClose, onDelete }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prev
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [onClose])
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 120, backgroundColor: 'rgba(20,20,35,0.82)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          backgroundColor: '#fff', borderRadius: '16px', overflow: 'hidden',
+          maxWidth: '420px', width: '100%', maxHeight: '86vh', overflowY: 'auto',
+        }}
+      >
+        {url && (
+          isVideoType(entry.photoType)
+            ? <video src={url} controls playsInline autoPlay style={{ width: '100%', display: 'block', maxHeight: '60vh', background: '#000' }} />
+            : <img src={url} alt="" style={{ width: '100%', display: 'block', maxHeight: '60vh', objectFit: 'contain', background: '#111' }} />
+        )}
+        <div style={{ padding: '15px 17px 17px' }}>
+          <div style={{ fontSize: '11.5px', color: '#999', fontWeight: 500 }}>
+            {new Date(entry.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+            {profile?.dateOfBirth && ` · ${nameAndAgeAt(profile.babyName, profile.dateOfBirth, entry.createdAt)}`}
+          </div>
+          {entry.note && (
+            <p style={{ margin: '8px 0 0', fontSize: '15px', color: '#1a1a2e', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+              {entry.note}
+            </p>
+          )}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button
+              onClick={onClose}
+              style={{
+                flex: 2, padding: '11px', borderRadius: '10px', border: 'none',
+                backgroundColor: '#7C3AED', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              Close
+            </button>
+            <button
+              onClick={() => { if (confirm('Delete this memory?')) onDelete(entry.id) }}
+              style={{
+                flex: 1, padding: '11px', borderRadius: '10px', border: '1.5px solid #f3d6d6',
+                backgroundColor: '#fff', color: '#c44', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
+
+/* ---------------- add form ---------------- */
 
 function AddForm({ onSave, onCancel }) {
   const [file, setFile] = useState(null)
@@ -92,16 +229,17 @@ function AddForm({ onSave, onCancel }) {
     setSaving(true)
     setSaveError('')
     try {
-      const photoBlob = file || null
-      const photoType = file ? (file.type || 'image/jpeg') : null
-      await addEntry({ note: note.trim(), photoBlob, photoType })
+      await addEntry({
+        note: note.trim(),
+        photoBlob: file || null,
+        photoType: file ? (file.type || 'image/jpeg') : null,
+      })
       onSave()
     } catch (err) {
       // Raw storage errors ("QuotaExceededError: ...") mean nothing to a
       // parent. Keep the detail in the console, say something useful here.
       console.error('Save failed', err)
-      const outOfSpace = err?.name === 'QuotaExceededError'
-      setSaveError(outOfSpace
+      setSaveError(err?.name === 'QuotaExceededError'
         ? "There's no room left on this device for another memory. Try deleting an older video."
         : 'Could not save that memory. Please try again.')
     } finally {
@@ -109,33 +247,23 @@ function AddForm({ onSave, onCancel }) {
     }
   }
 
+  const canSave = Boolean(file || note.trim())
+
   return (
     <div style={{
-      backgroundColor: '#fff',
-      borderRadius: '14px',
-      padding: '16px',
-      marginBottom: '16px',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+      backgroundColor: '#fff', borderRadius: '14px', padding: '16px',
+      marginBottom: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
     }}>
       <label
         htmlFor="journal-photo-input"
         style={{
-          display: 'block',
-          border: '2px dashed #d4d8e3',
-          borderRadius: '12px',
-          padding: previewUrl ? 0 : '32px 16px',
-          textAlign: 'center',
-          cursor: 'pointer',
-          marginBottom: '12px',
-          overflow: 'hidden',
+          display: 'block', border: '2px dashed #d4d8e3', borderRadius: '12px',
+          padding: previewUrl ? 0 : '32px 16px', textAlign: 'center',
+          cursor: 'pointer', marginBottom: '12px', overflow: 'hidden',
         }}
       >
         {previewUrl ? (
-          isVideoType(file?.type) ? (
-            <video src={previewUrl} controls playsInline style={{ width: '100%', display: 'block', maxHeight: '320px', objectFit: 'cover', background: '#000' }} />
-          ) : (
-            <img src={previewUrl} alt="preview" style={{ width: '100%', display: 'block', maxHeight: '320px', objectFit: 'cover' }} />
-          )
+          <Media url={previewUrl} type={file?.type} style={{ width: '100%', maxHeight: '320px' }} />
         ) : (
           <span style={{ color: '#888', fontSize: '14px' }}>Tap to add a photo or video</span>
         )}
@@ -157,29 +285,17 @@ function AddForm({ onSave, onCancel }) {
       <textarea
         value={note}
         onChange={e => setNote(e.target.value)}
-        placeholder="Add a note... (optional)"
+        placeholder="What happened? (optional)"
         rows={3}
         style={{
-          width: '100%',
-          padding: '12px',
-          borderRadius: '10px',
-          border: '1.5px solid #E5E7EB',
-          fontSize: '14px',
-          resize: 'vertical',
-          fontFamily: 'inherit',
-          outline: 'none',
-          boxSizing: 'border-box',
-          marginBottom: '12px',
+          width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #E5E7EB',
+          fontSize: '14px', resize: 'vertical', fontFamily: 'inherit', outline: 'none',
+          boxSizing: 'border-box', marginBottom: '12px',
         }}
       />
 
       {saveError && (
-        <p style={{
-          margin: '0 0 10px',
-          fontSize: '13px',
-          color: '#c44',
-          lineHeight: 1.45,
-        }}>
+        <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#c44', lineHeight: 1.45 }}>
           {saveError}
         </p>
       )}
@@ -189,32 +305,20 @@ function AddForm({ onSave, onCancel }) {
           onClick={onCancel}
           disabled={saving}
           style={{
-            flex: 1,
-            padding: '12px',
-            borderRadius: '10px',
-            border: '1.5px solid #E5E7EB',
-            backgroundColor: '#fff',
-            color: '#555',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
+            flex: 1, padding: '12px', borderRadius: '10px', border: '1.5px solid #E5E7EB',
+            backgroundColor: '#fff', color: '#555', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
           }}
         >
           Cancel
         </button>
         <button
           onClick={handleSave}
-          disabled={saving || (!file && !note.trim())}
+          disabled={saving || !canSave}
           style={{
-            flex: 2,
-            padding: '12px',
-            borderRadius: '10px',
-            border: 'none',
-            backgroundColor: (file || note.trim()) && !saving ? '#7C3AED' : '#E5E7EB',
-            color: '#fff',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: (file || note.trim()) && !saving ? 'pointer' : 'not-allowed',
+            flex: 2, padding: '12px', borderRadius: '10px', border: 'none',
+            backgroundColor: canSave && !saving ? '#7C3AED' : '#E5E7EB',
+            color: '#fff', fontSize: '14px', fontWeight: 600,
+            cursor: canSave && !saving ? 'pointer' : 'not-allowed',
           }}
         >
           {saving ? 'Saving...' : 'Save memory'}
@@ -224,14 +328,24 @@ function AddForm({ onSave, onCancel }) {
   )
 }
 
-export default function JournalScreen() {
+/* ---------------- screen ---------------- */
+
+export default function JournalScreen({ profile }) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
+  const [opened, setOpened] = useState(null)
+
+  const urls = useObjectUrls(entries)
+  useEffect(() => () => { urls.forEach(u => URL.revokeObjectURL(u)) }, [urls])
+
+  const months = useMemo(
+    () => groupByMonth(entries, profile?.dateOfBirth),
+    [entries, profile?.dateOfBirth],
+  )
 
   async function refresh() {
-    const list = await getEntries()
-    setEntries(list)
+    setEntries(await getEntries())
     setLoading(false)
   }
 
@@ -239,24 +353,20 @@ export default function JournalScreen() {
 
   async function handleDelete(id) {
     await deleteEntry(id)
+    setOpened(null)
     refresh()
   }
 
   return (
     <div style={{
-      maxWidth: '480px',
-      margin: '0 auto',
+      maxWidth: '480px', margin: '0 auto',
       fontFamily: "'Segoe UI', system-ui, sans-serif",
-      minHeight: '100vh',
-      backgroundColor: '#FAFAFA',
+      minHeight: '100vh', backgroundColor: '#FAFAFA',
     }}>
       <div style={{
-        padding: '20px 20px 16px',
-        backgroundColor: '#fff',
+        padding: '20px 20px 16px', backgroundColor: '#fff',
         boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div>
           <h1 style={{ margin: '0 0 2px', fontSize: '20px', fontWeight: 700, color: '#1a1a2e' }}>
@@ -270,14 +380,9 @@ export default function JournalScreen() {
           <button
             onClick={() => setAdding(true)}
             style={{
-              padding: '8px 14px',
-              borderRadius: '20px',
-              border: 'none',
-              backgroundColor: '#7C3AED',
-              color: '#fff',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
+              padding: '8px 14px', borderRadius: '20px', border: 'none',
+              backgroundColor: '#7C3AED', color: '#fff', fontSize: '13px',
+              fontWeight: 600, cursor: 'pointer',
             }}
           >
             + Add
@@ -287,10 +392,7 @@ export default function JournalScreen() {
 
       <div style={{ padding: '16px' }}>
         {adding && (
-          <AddForm
-            onSave={() => { setAdding(false); refresh() }}
-            onCancel={() => setAdding(false)}
-          />
+          <AddForm onSave={() => { setAdding(false); refresh() }} onCancel={() => setAdding(false)} />
         )}
 
         {loading ? (
@@ -306,26 +408,35 @@ export default function JournalScreen() {
             <button
               onClick={() => setAdding(true)}
               style={{
-                marginTop: '20px',
-                padding: '12px 24px',
-                borderRadius: '24px',
-                border: 'none',
-                backgroundColor: '#7C3AED',
-                color: '#fff',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
+                marginTop: '20px', padding: '12px 24px', borderRadius: '24px', border: 'none',
+                backgroundColor: '#7C3AED', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
               }}
             >
               Add your first memory
             </button>
           </div>
         ) : (
-          entries.map(entry => (
-            <EntryCard key={entry.id} entry={entry} onDelete={handleDelete} />
+          months.map(group => (
+            <MonthSection
+              key={group.key}
+              group={group}
+              urls={urls}
+              profile={profile}
+              onOpen={setOpened}
+            />
           ))
         )}
       </div>
+
+      {opened && (
+        <EntrySheet
+          entry={opened}
+          url={urls.get(opened.id)}
+          profile={profile}
+          onClose={() => setOpened(null)}
+          onDelete={handleDelete}
+        />
+      )}
     </div>
   )
 }

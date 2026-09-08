@@ -8,6 +8,8 @@ export const DOMAINS = {
   language: { label: 'Talking',  color: '#4F7CF7' },
   motor:    { label: 'Moving',   color: '#059669' },
   thinking: { label: 'Thinking', color: '#D97706' },
+  // Milestones the parent added themselves — see lib/customMilestones.js.
+  custom:   { label: 'Yours',    color: '#DB2777' },
 }
 
 export const CHECKPOINTS = [2, 4, 6, 9, 12, 15, 18, 24]

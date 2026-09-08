@@ -131,7 +131,7 @@ export default function App() {
         {activeTab === 'stories' && <StoriesScreen profile={profile} />}
         {activeTab === 'stats'      && <StatsScreen profile={profile} onProfileChange={handleProfileChange} />}
         {activeTab === 'milestones' && <MilestonesScreen profile={profile} />}
-        {activeTab === 'journal'    && <JournalScreen />}
+        {activeTab === 'journal'    && <JournalScreen profile={profile} />}
       </div>
 
       {/* Bottom nav */}
