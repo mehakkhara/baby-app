@@ -80,6 +80,9 @@ export default function MilestonesScreen({ profile }) {
     try {
       const next = await attachPhoto(milestone.id, { file, caption: milestone.text })
       setPhotoLinks({ ...next })
+      // A photo of the moment IS the milestone happening — no separate
+      // "Yes!" tap required. Auto-marking also fires the confetti.
+      mark(milestone.id, 'done')
     } catch (err) {
       console.error('Milestone photo failed', err)
       alert(err?.name === 'QuotaExceededError'
@@ -366,11 +369,11 @@ export default function MilestonesScreen({ profile }) {
                     fontFamily: 'inherit',
                   }}
                 >
-                  📷 Add a picture
+                  {isDone ? '📷 Add a picture to make a keepsake card' : '📷 Add a picture'}
                 </button>
               )}
 
-              {isDone && photoUrls[m.id] && (
+              {photoUrls[m.id] && (
                 <button
                   onClick={() => setKeepsakeFor(m)}
                   style={{
