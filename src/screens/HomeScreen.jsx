@@ -12,8 +12,7 @@ import Burst from '../components/Burst'
 import StreakRow from '../components/StreakRow'
 import PhotoHunt from '../components/PhotoHunt'
 import Flashback from '../components/Flashback'
-import TonightStory from '../components/TonightStory'
-import { isBedtimeHour, greetingForHour } from '../lib/timeOfDay'
+import { greetingForHour } from '../lib/timeOfDay'
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001'
 
@@ -81,7 +80,7 @@ const STAT_COLORS = [
   { accent: '#E91E8C' },
 ]
 
-export default function HomeScreen({ profile, onResetProfile, onSignOut, onOpenJournal, onOpenStories }) {
+export default function HomeScreen({ profile, onResetProfile, onSignOut, onOpenJournal }) {
   const [selectedTopic, setSelectedTopic] = useState(null)
   const [savedTips, setSavedTips] = useState(() => loadSaved())
   const [showSaved, setShowSaved] = useState(false)
@@ -342,9 +341,6 @@ export default function HomeScreen({ profile, onResetProfile, onSignOut, onOpenJ
         </h1>
         <StreakRow summary={streakInfo} babyName={babyName} />
       </div>
-
-      {/* Wind-down hours: the evening leads with tonight's story */}
-      {isBedtimeHour(hour) && <TonightStory profile={profile} onOpenStories={onOpenStories} />}
 
       {/* A memory resurfaced from ~N months ago, when one exists */}
       <Flashback profile={profile} onOpenJournal={onOpenJournal} />

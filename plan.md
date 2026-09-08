@@ -286,7 +286,7 @@ Without caching, every time the mom switches tabs and comes back to Home, we'd h
 ### Shipped next (same week)
 5. **Flashback card** (branch `feat/flashback`) — Home resurfaces a journal photo/video from a whole number of months ago (same day-of-month, ±3 days; most recent anniversary wins). Tap opens the Journal. Appears only when a real match exists — its appearance is the surprise.
 
-6. **Time-aware home** (branch `feat/time-aware-home`) — greeting varies by hour ("Good morning ☀️" → "Winding down 🌙"); during wind-down hours (7pm–5am) Home leads with a Tonight's story card (same daily pick as the Stories tab, taps through to it) and the page backdrop dims to a dusk gradient (`body.evening`). Hour re-checked on focus/visibility + a 10-min interval.
+6. **Time-aware home** (branch `feat/time-aware-home`) — greeting varies by hour ("Good morning ☀️" → "Winding down 🌙"); during wind-down hours (7pm–5am) the **app opens on the Stories tab** (initial tab only — navigation stays free) and the backdrop dims to a dusk gradient (`body.evening`). A Tonight's-story card on Home was tried first and rejected — cluttered UX; opening on Stories is the cleaner expression of the same idea.
 
 ### Later (from the idea docs, not in this pass)
 - Flashback "one month ago today", time-aware home (evening → Tonight's story), Sunday recap + Web Share, timelapse reel, milestone keepsake cards, collage poster.
