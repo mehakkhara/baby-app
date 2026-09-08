@@ -288,6 +288,8 @@ Without caching, every time the mom switches tabs and comes back to Home, we'd h
 
 6. **Time-aware home** (branch `feat/time-aware-home`) — greeting varies by hour ("Good morning ☀️" → "Winding down 🌙"); during wind-down hours (7pm–5am) the **app opens on the Stories tab** (initial tab only — navigation stays free) and the backdrop dims to a dusk gradient (`body.evening`). A Tonight's-story card on Home was tried first and rejected — cluttered UX; opening on Stories is the cleaner expression of the same idea.
 
+7. **Milestone keepsake cards** (branch `feat/keepsake-cards`) — a done milestone with a photo gets a "Make a keepsake card" button: canvas-composed 1080×1350 JPEG (photo + gradient overlay + milestone text + name/age/date + BabyCue badge), 3 themes, shared via Web Share API (download fallback). All on-device, $0. Reviewed by user in dev server before commit (new standard).
+
 ### Later (from the idea docs, not in this pass)
 - Flashback "one month ago today", time-aware home (evening → Tonight's story), Sunday recap + Web Share, timelapse reel, milestone keepsake cards, collage poster.
 - Design-debt fixes flagged in the audit: unify #7C3AED vs #7C6FF7, move settings off Home, replace confirm()/alert() with sheets, single AddMemory component, unit toggle for Growth.

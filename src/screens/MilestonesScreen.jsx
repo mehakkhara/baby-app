@@ -6,6 +6,7 @@ import { loadCustom, addCustom, removeCustom, customForCheckpoint } from '../lib
 import { ideasFor } from '../data/milestoneIdeas'
 import { loadPhotoLinks, attachPhoto, detachPhoto, loadPhotoUrls } from '../lib/milestonePhotos'
 import Burst from '../components/Burst'
+import KeepsakeModal from '../components/KeepsakeModal'
 
 export default function MilestonesScreen({ profile }) {
   const { babyName, dateOfBirth } = profile
@@ -41,6 +42,7 @@ export default function MilestonesScreen({ profile }) {
   }, [photoLinks])
 
   const [celebrating, setCelebrating] = useState(null)
+  const [keepsakeFor, setKeepsakeFor] = useState(null) // milestone whose card sheet is open
 
   function mark(id, status) {
     const wasDone = statuses[id] === 'done'
@@ -368,6 +370,21 @@ export default function MilestonesScreen({ profile }) {
                 </button>
               )}
 
+              {isDone && photoUrls[m.id] && (
+                <button
+                  onClick={() => setKeepsakeFor(m)}
+                  style={{
+                    marginTop: '8px', width: '100%', padding: '8px',
+                    borderRadius: '9px', border: 'none',
+                    background: 'linear-gradient(135deg, #7C6FF7, #a78bfa)',
+                    color: '#fff', fontSize: '12px', fontWeight: '600',
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  🎞 Make a keepsake card
+                </button>
+              )}
+
               {isNotYet && m.tip && (
                 <div style={{
                   marginTop: '10px',
@@ -388,6 +405,15 @@ export default function MilestonesScreen({ profile }) {
           {MILESTONE_NOTE}
         </p>
       </div>
+
+      {keepsakeFor && photoUrls[keepsakeFor.id] && (
+        <KeepsakeModal
+          photoUrl={photoUrls[keepsakeFor.id]}
+          milestoneText={keepsakeFor.text}
+          profile={profile}
+          onClose={() => setKeepsakeFor(null)}
+        />
+      )}
     </div>
   )
 }
